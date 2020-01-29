@@ -30,7 +30,7 @@ namespace Issuetrak.API.Client.Example
         {
             get
             {
-                return Int16.Parse(ConfigurationManager.AppSettings["apiVersion"]);
+                return Int32.Parse(ConfigurationManager.AppSettings["apiVersion"]);
             }
         }
         private static string BaseApiurl
