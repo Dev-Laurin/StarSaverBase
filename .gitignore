@@ -1,5 +1,9 @@
-App.config
+#Visual Studio - Common
 bin/
+obj/
 .vs/
 *.sln
 *.csproj
+
+#Visual Studio - Configuration
+App.config
