@@ -388,6 +388,8 @@ namespace Issuetrak.API.Client.Example
 
         #endregion
 
+        private static string responseText { get; set; }
+
         #region Private Static Methods
 
         #region Helper Methods
@@ -440,7 +442,7 @@ namespace Issuetrak.API.Client.Example
                 Console.WriteLine("The following Exception was raised : {0}", e.Message);
             }
 
-            
+            responseText = response.ResponseText;
             //COMMENTED OUT DUE TO ERROR WITH WINDOWS 7 LAUNCHING A System.Diagnostics.Process -- 1/30/20
             // Generate a randomly-named temporary file, and add the ".txt" text file extension so that the file 
             // can be opened with the system-defined text editor.
@@ -1099,7 +1101,7 @@ namespace Issuetrak.API.Client.Example
 
                 var response = await client.CreateIssueAsync(request);
 
-                WriteAPIResponseToOutput("CreateIssueAsync", response);
+                WriteAPIResponseToOutput("CreateIssueAsync", response); 
             }
         }
 
@@ -2327,10 +2329,12 @@ namespace Issuetrak.API.Client.Example
                 await CreateIssueAsync(createIssueDTO);
             }).Wait();
 
+            int id = Int32.Parse(responseText);
+
             //retrieve the created issue. 
             Task.Run(async () =>
             {
-                await GetIssueForIssueNumberAsync(85646, false);
+                await GetIssueForIssueNumberAsync(id, false);
             }).Wait(); 
         }
 
