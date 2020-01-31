@@ -29,6 +29,8 @@ using System.Threading.Tasks;
 using Issuetrak.DataModels.DTOs;
 using Newtonsoft.Json;
 using Issuetrak.API.Data.Models.Models.OrganizationModels;
+using System.Net;
+using System.Net.Http;
 
 namespace Issuetrak.API.Client.Example
 {
@@ -376,11 +378,31 @@ namespace Issuetrak.API.Client.Example
             }
         }
 
+        private static string User
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings["username"];
+            }
+        }
+
         #endregion
 
         #region Private Static Methods
 
         #region Helper Methods
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Returns if the status code means success or not. </summary>
+        ///
+        /// <remarks>   01/30/20. </remarks>
+        ///
+        /// <typeparam name="hsc">    Http status code. </typeparam>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        private static bool ResponseStatus(HttpStatusCode hsc)
+        {
+            return ((int)hsc >= 200) && ((int)hsc <= 299);
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Writes the API response to output. </summary>
@@ -394,44 +416,64 @@ namespace Issuetrak.API.Client.Example
         private static void WriteAPIResponseToOutput<TResponse>(string description, IssuetrakAPIResponse<TResponse> response)
             where TResponse : class
         {
-            Console.WriteLine("/////////////////////////////////////////////////////");
-
-            Console.WriteLine("{0} Response with Status Code: {1} ({2})", description, (int)response.ResponseStatusCode, response.ResponseStatusCode);
-
-            Console.WriteLine("/////////////////////////////////////////////////////");
-
-            // Generate a randomly-named temporary file, and add the ".txt" text file extension so that the file 
-            // can be opened with the system-defined text editor.
-            var temporaryOutputFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-
-            var temporaryFilename = string.Concat(temporaryOutputFilePath, ".txt");
-
-            // Add the temporary file for cleanup at the program's end.
-            _temporaryFiles.Add(temporaryFilename);
-
-            // The Formatting.Indented option is used to pretty-print the JSON response text.
-            string formattedJson;
-
             try
             {
-                if (response.ResponseObject != null)
+                int responseCode = (int)response.ResponseStatusCode; 
+                Console.WriteLine("/////////////////////////////////////////////////////");
+
+                Console.WriteLine("{0} Response with Status Code: {1} ({2})", description, responseCode, response.ResponseStatusCode);
+
+                Console.WriteLine("/////////////////////////////////////////////////////");
+
+                if (ResponseStatus(response.ResponseStatusCode))
                 {
-                    formattedJson = JsonConvert.SerializeObject(response.ResponseObject, Formatting.Indented);
+                    Console.WriteLine("{0} Succeeded.", description);
                 }
                 else
                 {
-                    formattedJson = response.ResponseText ?? "Empty Response!";
+                    //failed 
+                    Console.WriteLine("{0} Failed.", description); 
                 }
             }
-            catch
+            catch(Exception e)
             {
-                formattedJson = response.ResponseText ?? "Empty Response!";
+                Console.WriteLine("The following Exception was raised : {0}", e.Message);
             }
 
-            File.WriteAllText(temporaryFilename, formattedJson);
+            return response.ResponseText; 
+            //COMMENTED OUT DUE TO ERROR WITH WINDOWS 7 LAUNCHING A System.Diagnostics.Process -- 1/30/20
+            // Generate a randomly-named temporary file, and add the ".txt" text file extension so that the file 
+            // can be opened with the system-defined text editor.
+            //var temporaryOutputFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+            //var temporaryFilename = string.Concat(temporaryOutputFilePath, ".txt");
+
+            //// Add the temporary file for cleanup at the program's end.
+            //_temporaryFiles.Add(temporaryFilename);
+
+            //// The Formatting.Indented option is used to pretty-print the JSON response text.
+            //string formattedJson;
+
+            //try
+            //{
+            //    if (response.ResponseObject != null)
+            //    {
+            //        formattedJson = JsonConvert.SerializeObject(response.ResponseObject, Formatting.Indented);
+            //    }
+            //    else
+            //    {
+            //        formattedJson = response.ResponseText ?? "Empty Response!";
+            //    }
+            //}
+            //catch
+            //{
+            //    formattedJson = response.ResponseText ?? "Empty Response!";
+            //}
+
+            //File.WriteAllText(temporaryFilename, formattedJson);
 
             // Display the response output using the current text editor.
-            Process.Start(temporaryFilename);
+            //Process.Start(temporaryFilename);
         }
 
         #endregion        
@@ -2241,76 +2283,14 @@ namespace Issuetrak.API.Client.Example
 
         #region Program Public Methods
 
-        //Microsoft implementation for configuration 
-        static void ReadAllSettings()
-        {
-            try
-            {
-                var appSettings = ConfigurationManager.AppSettings;
-
-                if (appSettings.Count == 0)
-                {
-                    Console.WriteLine("AppSettings is empty.");
-                }
-                else
-                {
-                    foreach (var key in appSettings.AllKeys)
-                    {
-                        Console.WriteLine("Key: {0} Value: {1}", key, appSettings[key]);
-                    }
-                }
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Console.WriteLine("Error reading app settings");
-            }
-        }
-
-        static void ReadSetting(string key)
-        {
-            try
-            {
-                var appSettings = ConfigurationManager.AppSettings;
-                string result = appSettings[key] ?? "Not Found";
-                Console.WriteLine(result);
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Console.WriteLine("Error reading app settings");
-            }
-        }
-
-        static void AddUpdateAppSettings(string key, string value)
-        {
-            try
-            {
-                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                var settings = configFile.AppSettings.Settings;
-                if (settings[key] == null)
-                {
-                    settings.Add(key, value);
-                }
-                else
-                {
-                    settings[key].Value = value;
-                }
-                configFile.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Console.WriteLine("Error writing app settings");
-            }
-        }
-
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Executes this instance. </summary>
         ///
         /// <remarks>   11/18/2014. </remarks>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public async virtual void Execute()
+        public async void Execute()
         {
-            var runIteration = true;
+            var runIteration = false;
 
             // The testing process consists of the display of the available test methods, the execution of a selected method,
             // and the option to execute another test.
@@ -2326,19 +2306,44 @@ namespace Issuetrak.API.Client.Example
 
                 runIteration = string.Compare(Console.ReadLine() ?? string.Empty, "y", StringComparison.OrdinalIgnoreCase) == 0;
             }
+
+            //samples
+            CreateIssueDTO createIssueDTO = new CreateIssueDTO()
+            {
+                ShouldSuppressEmailForCreateOperation = false,
+                EnteredBy = "Laurin.McKenna",
+                SubmittedBy = "Laurin.McKenna",
+                SubmittedDate = DateTime.Now,
+                Subject = "something",
+                Description = "Testing api ..",
+                IssueTypeID = 1,
+                IssueSubTypeID = 4,
+                PriorityID = 4,
+                OrganizationID = 1
+            };
+            //create issue 
+            Task.Run(async () =>
+            {
+                await CreateIssueAsync(createIssueDTO);
+            }).Wait();
+
+            //retrieve the created issue. 
+            Task.Run(async () =>
+            {
+                await GetIssueForIssueNumberAsync(85646, false);
+            }).Wait(); 
         }
 
+        #endregion
 
-#endregion
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>   Main entry-point for this application. </summary>
-///
-/// <remarks>   09/15/2014. </remarks>
-////////////////////////////////////////////////////////////////////////////////////////////////////
-private static void Main()
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Main entry-point for this application. </summary>
+        ///
+        /// <remarks>   09/15/2014. </remarks>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        private static void Main()
         {
-            using (var programCore = new UFII())
+            using (var programCore = new Program())
             {
                 programCore.Execute();
             }
