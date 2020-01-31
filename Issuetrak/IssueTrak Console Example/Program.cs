@@ -2335,7 +2335,10 @@ namespace Issuetrak.API.Client.Example
             Task.Run(async () =>
             {
                 await GetIssueForIssueNumberAsync(id, false);
-            }).Wait(); 
+            }).Wait();
+            var json = JsonConvert.DeserializeObject<ReadIssueDTO>(responseText);
+            //serialize response from json 
+            Console.WriteLine(json.SubmittedBy); 
         }
 
         #endregion
