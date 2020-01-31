@@ -440,7 +440,7 @@ namespace Issuetrak.API.Client.Example
                 Console.WriteLine("The following Exception was raised : {0}", e.Message);
             }
 
-            return response.ResponseText; 
+            
             //COMMENTED OUT DUE TO ERROR WITH WINDOWS 7 LAUNCHING A System.Diagnostics.Process -- 1/30/20
             // Generate a randomly-named temporary file, and add the ".txt" text file extension so that the file 
             // can be opened with the system-defined text editor.
